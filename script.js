@@ -63,7 +63,7 @@ const lights = Array.from({ length: 72 }, () => ({ x: rnd(), y: rnd(), z: .15 + 
 const TINTS = [[[40,10,50],[255,70,170],'#ffe3f4'], [[5,40,45],[34,230,200],'#dcfff9'], [[50,25,10],[255,138,60],'#fff0dc'], [[20,20,60],[130,150,255],'#e8ecff'], [[50,10,30],[255,62,120],'#ffe0ea']];
 const orbs = TINTS.map((t, i) => ({ t, fx: .13 + i * .035, fy: .1 + i * .03, p: i * 1.9, r: .09 + (i % 3) * .035, z: .5 + (i % 3) * .25 }));
 
-function chrome(x, y, r, rot, t, a) {
+function chrome(x, y, r, rot, t, a, vid) {
   const [dark, mid, hi] = [`rgb(${t[0]})`, `rgb(${t[1]})`, t[2]];
   ctx.save(); ctx.globalAlpha = a;
   ctx.globalCompositeOperation = 'lighter';
@@ -76,13 +76,33 @@ function chrome(x, y, r, rot, t, a) {
   g = ctx.createLinearGradient(0, -r, 0, r);
   g.addColorStop(0, '#f2fbff'); g.addColorStop(.26, '#86a9d8'); g.addColorStop(.46, '#161c3a'); g.addColorStop(.5, '#04050d');
   g.addColorStop(.54, dark); g.addColorStop(.78, mid); g.addColorStop(1, hi);
+  if (vid && vid.readyState >= 2) { drawCover(vid, -r, -r, 2 * r, 2 * r); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = a * .4; }
   ctx.fillStyle = g; ctx.fillRect(-r, -r, 2 * r, 2 * r); ctx.rotate(-rot);
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = a;
   g = ctx.createRadialGradient(0, 0, r * .5, 0, 0, r); g.addColorStop(0, 'rgba(0,0,10,0)'); g.addColorStop(1, 'rgba(0,0,14,.6)');
   ctx.fillStyle = g; ctx.fillRect(-r, -r, 2 * r, 2 * r);
   g = ctx.createRadialGradient(-r * .36, -r * .46, 0, -r * .36, -r * .46, r * .4); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = g; ctx.fillRect(-r, -r, 2 * r, 2 * r);
   ctx.restore();
 }
+
+/* ---------- VIDEO (без звука) ---------- */
+const VIDS = ['metro', 'candy', 'city'].map(n => {
+  const v = document.createElement('video');
+  v.src = 'assets/video/' + n + '.mp4'; v.muted = v.defaultMuted = true; v.loop = true; v.playsInline = true;
+  v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.preload = 'auto';
+  v.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+  document.body.appendChild(v); return v;
+});
+const playVideos = () => VIDS.forEach(v => v.play().catch(() => {}));
+playVideos();
+function drawCover(v, x, y, w, h) {
+  const vw = v.videoWidth, vh = v.videoHeight; if (!vw) return;
+  const s = Math.max(w / vw, h / vh), sw = w / s, sh = h / s;
+  ctx.drawImage(v, (vw - sw) / 2, (vh - sh) / 2, sw, sh, x, y, w, h);
+}
+orbs.forEach((o, i) => o.v = [0, 1, 2, -1, -1][i]);   // первые три шара — «порталы» с видео
+const vA = { metro: 0, candy: 0, city: 0 }; let scene = 'intro';
 
 let t0 = performance.now(), beatT = 0;
 function frame(now) {
@@ -100,12 +120,21 @@ function frame(now) {
   bg.addColorStop(0, '#04050b'); bg.addColorStop(.6, `rgb(${8 + mood * 14},${6},${20 + mood * 10})`); bg.addColorStop(1, '#0a1214');
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
+  // видео-слои (screen-смешивание поверх тёмного фона)
+  const tg = scene === 'finale' ? { metro: .1, candy: .34, city: .18 } : scene === 'story' ? { metro: .3, candy: 0, city: .22 } : { metro: 0, candy: 0, city: .3 };
+  ctx.globalCompositeOperation = 'screen';
+  [['metro', 0], ['candy', 1], ['city', 2]].forEach(([k, i]) => {
+    vA[k] += (tg[k] - vA[k]) * .02;
+    if (vA[k] > .01 && VIDS[i].readyState >= 2) { ctx.globalAlpha = vA[k] * (.8 + energy * .5); drawCover(VIDS[i], 0, 0, W, H); }
+  });
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+
   // orbs (behind lights)
   orbs.forEach((o, i) => {
     const x = W * (.5 + .36 * Math.sin(t * o.fx + o.p)) + px * 60 * o.z;
     const y = H * (.5 + .36 * Math.cos(t * o.fy + o.p * 1.3)) + py * 60 * o.z;
-    const r = Math.min(W, H) * o.r * (1 + energy * .28) * (.7 + o.z * .5) * (1 + mood * .12);
-    chrome(x, y, r, Math.sin(t * .4 + i) * .5, o.t, .55 + o.z * .4);
+    const r = Math.min(W, H) * o.r * (1 + energy * .28) * (.7 + o.z * .5) * (1 + mood * .12) * (o.v >= 0 ? 1.35 : 1);
+    chrome(x, y, r, Math.sin(t * .4 + i) * .5, o.t, o.v >= 0 ? .95 : .55 + o.z * .4, VIDS[o.v]);
   });
 
   // city bokeh + motion streaks
@@ -158,12 +187,12 @@ async function nextPhoto() {
 async function run() {
   const greet = CONFIG.autoGreeting ? greeting() : 'Доброе утро';
   // экран 2
-  screen('story'); await sleep(1200);
+  scene = 'story'; screen('story'); await sleep(1200);
   for (const raw of CONFIG.story) await say($('line'), raw.replace('{greeting}', greet).replace('{name}', CONFIG.name), CONFIG.storyHold);
   await sleep(600);
 
   // экран 3
-  boost = 1; flash(false);
+  boost = 1; flash(false); scene = 'finale';
   screen('finale'); $('finale').classList.remove('end');
   vol(0, 0, 5); a2.currentTime = 0; a2.play().catch(() => {}); vol(1, 1, 2.5);
   await sleep(900);
@@ -179,7 +208,7 @@ async function run() {
 
 $('openBtn').onclick = async () => {
   $('openBtn').classList.add('pop'); $('openBtn').disabled = true;
-  initAudio(); if (ac) ac.resume();
+  initAudio(); if (ac) ac.resume(); playVideos();
   try { await a1.play(); } catch (e) {}
   a2.play().then(() => { a2.pause(); a2.currentTime = 0; }).catch(() => {}); // «разблокировка» второго трека для iOS
   if (!ac) a2.volume = 0;
