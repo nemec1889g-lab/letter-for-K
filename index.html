@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05060b">
+<title>для тебя 💞</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600&family=Manrope:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="grain"></div>
+<div id="flash"></div>
+
+<section id="intro" class="screen active">
+  <button id="openBtn" class="bubble" aria-label="Открыть"><span>открыть</span></button>
+  <p class="hint">включи звук ♡</p>
+</section>
+
+<section id="story" class="screen"><div id="line" class="line"></div></section>
+
+<section id="finale" class="screen">
+  <div id="frame" class="frame"><img id="photo" alt=""></div>
+  <div id="part" class="line small"></div>
+  <h1 id="title" class="title"></h1>
+  <p id="sub" class="sub"></p>
+  <button id="replay" class="ghost">ещё раз</button>
+</section>
+
+<button id="mute" aria-label="Звук">♪</button>
+
+<audio id="a1" src="assets/music/vyzee.mp3" preload="auto" loop playsinline></audio>
+<audio id="a2" src="assets/music/bipp.mp3" preload="auto" loop playsinline></audio>
+<script src="script.js"></script>
+</body>
+</html>
