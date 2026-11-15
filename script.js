@@ -1,16 +1,18 @@
 /* ============ НАСТРОЙКИ: меняй текст здесь ============ */
 const CONFIG = {
-  name: "Ветерочек",
+  name: "Принцесса Катёна",
   autoGreeting: true,          // «Доброе утро / Добрый день / ...» по времени суток
   story: [                     // экран 2 — появляются по одной
-    "{greeting}, мой {name} 💞",
-    "Я знаю, что сегодня у тебя важный день...",
-    "И я просто хочу пожелать тебе удачи."
+    "{greeting}, моя {name} 💗",
+    "Я знаю, что сегодня тебе нужно выучить многое для зачёта...",
+    "И я просто хочу пожелать тебе удачи",
+    "Потому что я тебя люблю 💖"
   ],
   wishParts: [                 // экран 3 — части пожелания (с фото, если они есть)
     "У тебя всё получится.",
-    "Ты умнее и сильнее, чем сама о себе думаешь.",
-    "Что бы ни случилось сегодня — я тобой горжусь.",
+    "Ты самая умная и добрая девочка на свете и это главное.",
+    "Что бы ни случилось сегодня, я знаю что ты для меня:",
+    "Всегда умничка💕",
     "И я рядом, даже когда не рядом."
   ],
   wishTitle: "удачи тебе\nсегодня",   // кульминация
@@ -87,13 +89,7 @@ function chrome(x, y, r, rot, t, a, vid) {
 }
 
 /* ---------- VIDEO (без звука) ---------- */
-const VIDS = ['metro', 'candy', 'city'].map(n => {
-  const v = document.createElement('video');
-  v.src = 'assets/video/' + n + '.mp4'; v.muted = v.defaultMuted = true; v.loop = true; v.playsInline = true;
-  v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.preload = 'auto';
-  v.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
-  document.body.appendChild(v); return v;
-});
+const VIDS = ['metro', 'candy', 'city'].map(n => { const v = $('vbg-' + n); v.muted = true; return v; });
 const CORNERS = [$('cornerBL'), $('cornerTR')];
 CORNERS.forEach(c => { c.muted = true; c.addEventListener('loadeddata', () => c.classList.add('ready')); c.addEventListener('error', () => c.remove()); });
 const playVideos = () => [...VIDS, ...CORNERS].forEach(v => v && v.play().catch(() => {}));
@@ -103,7 +99,7 @@ function drawCover(v, x, y, w, h) {
   const s = Math.max(w / vw, h / vh), sw = w / s, sh = h / s;
   ctx.drawImage(v, (vw - sw) / 2, (vh - sh) / 2, sw, sh, x, y, w, h);
 }
-orbs.forEach((o, i) => o.v = [0, 1, 2, -1, -1][i]);   // первые три шара — «порталы» с видео
+orbs.forEach((o, i) => o.v = -1);   // первые три шара — «порталы» с видео
 const vA = { metro: 0, candy: 0, city: 0 }; let scene = 'intro';
 
 let t0 = performance.now(), beatT = 0;
@@ -127,7 +123,7 @@ function frame(now) {
   ctx.globalCompositeOperation = 'screen';
   [['metro', 0], ['candy', 1], ['city', 2]].forEach(([k, i]) => {
     vA[k] += (tg[k] - vA[k]) * .02;
-    if (vA[k] > .01 && VIDS[i].readyState >= 2) { ctx.globalAlpha = vA[k] * (.8 + energy * .5); drawCover(VIDS[i], 0, 0, W, H); }
+    VIDS[i].style.opacity = (vA[k] * (.85 + energy * .5)).toFixed(3);
   });
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 
@@ -163,7 +159,7 @@ function words(el, text) {
 }
 async function say(el, text, hold) {
   words(el, text); void el.offsetWidth; el.classList.add('show'); lastShow = performance.now();
-  await wait(hold);
+  await wait(Math.max(hold, 1800 + text.length * 55));  // длинным фразам — больше времени
   el.classList.remove('show'); el.classList.add('out'); await sleep(1000);
 }
 function flash(big) { const f = $('flash'); f.className = ''; void f.offsetWidth; f.className = big ? 'big' : 'go'; }
