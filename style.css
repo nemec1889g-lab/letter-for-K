@@ -70,3 +70,10 @@ html,body{margin:0;height:100%;background:var(--ink);color:#fff;overflow:hidden;
 #mute.on{opacity:.85;pointer-events:auto}
 #mute.off{text-decoration:line-through;background:rgba(255,255,255,.03)}
 @media (prefers-reduced-motion:reduce){.grain,.bubble,.frame{animation:none}}
+
+/* цветочные уголки: видео растворяются в тёмном фоне */
+.corner{position:fixed;z-index:1;width:min(74vw,360px);aspect-ratio:1;object-fit:cover;pointer-events:none;opacity:0;transition:opacity 2.4s ease;filter:saturate(1.2) contrast(1.05)}
+.corner.ready.show{opacity:.88}
+.corner.bl{left:0;bottom:0;-webkit-mask-image:radial-gradient(ellipse at 0% 100%,#000 30%,transparent 70%);mask-image:radial-gradient(ellipse at 0% 100%,#000 30%,transparent 70%);transform-origin:0 100%;animation:sway 9s ease-in-out infinite}
+.corner.tr{right:0;top:0;-webkit-mask-image:radial-gradient(ellipse at 100% 0%,#000 30%,transparent 70%);mask-image:radial-gradient(ellipse at 100% 0%,#000 30%,transparent 70%);transform-origin:100% 0;animation:sway 11s ease-in-out infinite reverse}
+@keyframes sway{50%{transform:scale(1.06) rotate(1.2deg)}}

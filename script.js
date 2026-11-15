@@ -94,7 +94,9 @@ const VIDS = ['metro', 'candy', 'city'].map(n => {
   v.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
   document.body.appendChild(v); return v;
 });
-const playVideos = () => VIDS.forEach(v => v.play().catch(() => {}));
+const CORNERS = [$('cornerBL'), $('cornerTR')];
+CORNERS.forEach(c => { c.muted = true; c.addEventListener('loadeddata', () => c.classList.add('ready')); c.addEventListener('error', () => c.remove()); });
+const playVideos = () => [...VIDS, ...CORNERS].forEach(v => v && v.play().catch(() => {}));
 playVideos();
 function drawCover(v, x, y, w, h) {
   const vw = v.videoWidth, vh = v.videoHeight; if (!vw) return;
@@ -212,7 +214,7 @@ $('openBtn').onclick = async () => {
   try { await a1.play(); } catch (e) {}
   a2.play().then(() => { a2.pause(); a2.currentTime = 0; }).catch(() => {}); // «разблокировка» второго трека для iOS
   if (!ac) a2.volume = 0;
-  $('mute').classList.add('on'); boost = 1.2; flash(false);
+  $('mute').classList.add('on'); CORNERS.forEach((c, i) => setTimeout(() => c.classList.add('show'), 1200 + i * 900)); boost = 1.2; flash(false);
   await sleep(900); document.querySelector('.hint').style.opacity = 0;
   run();
 };
